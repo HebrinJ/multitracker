@@ -1,11 +1,28 @@
+// ============================================================================
+// МУЛЬТИТРЕКЕР - Схема базы данных
+// ============================================================================
+// Этот файл описывает структуру всех таблиц в базе данных.
+// Prisma использует его для создания клиента БД и миграций.
+//
+// После изменения этого файла выполните:
+// npx prisma migrate dev --name описание_изменений
+// npx prisma generate
+// ============================================================================
+
+// Генератор клиента Prisma
 generator client {
   provider = "prisma-client-js"
 }
 
+// Источник данных - SQLite
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+// ============================================================================
+// ПОЛЬЗОВАТЕЛИ
+// ============================================================================
 
 model User {
   id        String   @id @default(cuid())
@@ -15,7 +32,7 @@ model User {
   avatar    String?
   firstName String?
   lastName  String?
-  role      String   @default("USER")
+  role      String   @default("USER")  // USER, ADMIN
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -27,6 +44,48 @@ model User {
   notifications Notification[]
 }
 
+// ============================================================================
+// ЖАНРЫ
+// ============================================================================
+
+model Genre {
+  id        String   @id @default(cuid())
+  name      String
+  type      String              // BOOK, MOVIE
+  createdAt DateTime @default(now())
+
+  books     BookGenre[]
+  movies    MovieGenre[]
+
+  @@unique([name, type])
+}
+
+model BookGenre {
+  bookId    String
+  book      Book    @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  genreId   String
+  genre     Genre   @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([bookId, genreId])
+}
+
+model MovieGenre {
+  movieId   String
+  movie     Movie   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genreId   String
+  genre     Genre   @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([movieId, genreId])
+}
+
+// ============================================================================
+// КНИГИ
+// ============================================================================
+
 model Book {
   id          String   @id @default(cuid())
   title       String
@@ -36,7 +95,7 @@ model Book {
   cover       String?
   addedById   String?
   addedBy     User?    @relation(fields: [addedById], references: [id])
-  status      String   @default("PENDING")
+  status      String   @default("PENDING")  // PENDING, APPROVED, REJECTED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -53,7 +112,7 @@ model BookEntry {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   bookId    String
   book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  status    String   @default("NOT_READ")
+  status    String   @default("NOT_READ")  // NOT_READ, READING, COMPLETED, ON_HOLD, DROPPED
   rating    Int?
   notes     String?
   createdAt DateTime @default(now())
@@ -61,6 +120,10 @@ model BookEntry {
 
   @@unique([userId, bookId])
 }
+
+// ============================================================================
+// ФИЛЬМЫ
+// ============================================================================
 
 model Movie {
   id          String   @id @default(cuid())
@@ -71,7 +134,7 @@ model Movie {
   poster      String?
   addedById   String?
   addedBy     User?    @relation(fields: [addedById], references: [id])
-  status      String   @default("PENDING")
+  status      String   @default("PENDING")  // PENDING, APPROVED, REJECTED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -88,7 +151,7 @@ model MovieEntry {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   movieId   String
   movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  status    String   @default("NOT_WATCHED")
+  status    String   @default("NOT_WATCHED")  // NOT_WATCHED, WATCHING, COMPLETED, ON_HOLD, DROPPED
   rating    Int?
   notes     String?
   createdAt DateTime @default(now())
@@ -96,6 +159,10 @@ model MovieEntry {
 
   @@unique([userId, movieId])
 }
+
+// ============================================================================
+// ОТЗЫВЫ
+// ============================================================================
 
 model Review {
   id        String   @id @default(cuid())
@@ -111,43 +178,17 @@ model Review {
   updatedAt DateTime @updatedAt
 }
 
+// ============================================================================
+// УВЕДОМЛЕНИЯ
+// ============================================================================
+
 model Notification {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String
+  type      String   // CONTENT_APPROVED, CONTENT_REJECTED, CONTENT_MODIFIED
   title     String
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-}
-
-model Genre {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  type      String
-  createdAt DateTime @default(now())
-
-  books    BookGenre[]
-  movies   MovieGenre[]
-}
-
-model BookGenre {
-  id      String @id @default(cuid())
-  bookId  String
-  genreId String
-  book    Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
-
-  @@unique([bookId, genreId])
-}
-
-model MovieGenre {
-  id      String @id @default(cuid())
-  movieId String
-  genreId String
-  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
-
-  @@unique([movieId, genreId])
 }
