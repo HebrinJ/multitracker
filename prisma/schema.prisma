@@ -32,7 +32,6 @@ model Book {
   title       String
   author      String
   year        Int?
-  genre       String?
   description String?
   cover       String?
   addedById   String?
@@ -43,6 +42,7 @@ model Book {
 
   entries     BookEntry[]
   reviews     Review[]
+  genres      BookGenre[]
 
   @@unique([title, author])
 }
@@ -67,7 +67,6 @@ model Movie {
   title       String
   director    String
   year        Int?
-  genre       String?
   description String?
   poster      String?
   addedById   String?
@@ -78,6 +77,7 @@ model Movie {
 
   entries     MovieEntry[]
   reviews     Review[]
+  genres      MovieGenre[]
 
   @@unique([title, director])
 }
@@ -120,4 +120,34 @@ model Notification {
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model Genre {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  type      String
+  createdAt DateTime @default(now())
+
+  books    BookGenre[]
+  movies   MovieGenre[]
+}
+
+model BookGenre {
+  id      String @id @default(cuid())
+  bookId  String
+  genreId String
+  book    Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([bookId, genreId])
+}
+
+model MovieGenre {
+  id      String @id @default(cuid())
+  movieId String
+  genreId String
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@unique([movieId, genreId])
 }

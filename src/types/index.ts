@@ -125,3 +125,18 @@ export interface Review {
   book?: Book;
   movie?: Movie;
 }
+
+export interface Genre {
+  id: string;
+  name: string;
+  type: 'BOOK' | 'MOVIE';
+  createdAt: Date;
+}
+
+export interface BookWithGenres extends Omit<Book, 'genres'> {
+  genres: Genre[];
+}
+
+export interface MovieWithGenres extends Omit<Movie, 'genres'> {
+  genres: Genre[];
+}
